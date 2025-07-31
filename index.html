@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Space</title>
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5.js"></script>
+    <style>
+        body {
+            background-color: #1f2937;
+        }
+        .game-container {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="gameCanvas"></div>
+    </div>
+
+    <script>
+        let spaceship;
+        let asteroids = [];
+        let score = 0;
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+            spaceship = new Spaceship();
+        }
+
+        function draw() {
+            background(0);
+            spaceship.show();
+            spaceship.update();
+
+            if (frameCount % 60 === 0) {
+                asteroids.push(new Asteroid());
+            }
+
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                asteroids[i].show();
+                asteroids[i].update();
+
+                if (asteroids[i].hits(spaceship)) {
+                    alert('Game Over! Final Score: ' + score);
+                    noLoop();
+                }
+
+                if (asteroids[i].offScreen()) {
+                    asteroids.splice(i, 1);
+                    score++;
+                }
+            }
+
+            fill(255);
+            textSize(32);
+            text('Score: ' + score, 10, 30);
+        }
+
+        function keyPressed() {
+            if (keyCode === LEFT_ARROW) {
+                spaceship.setDir(-1);
+            } else if (keyCode === RIGHT_ARROW) {
+                spaceship.setDir(1);
+            }
+        }
+
+        function keyReleased() {
+            spaceship.setDir(0);
+        }
+
+        class Spaceship {
+            constructor() {
+                this.x = width / 2;
+                this.y = height - 50;
+                this.xSpeed = 0;
+                this.width = 60;
+                this.height = 30;
+            }
+
+            setDir(dir) {
+                this.xSpeed = dir * 5;
+            }
+
+            update() {
+                this.x += this.xSpeed;
+                this.x = constrain(this.x, 0, width - this.width);
+            }
+
+            show() {
+                fill(255);
+                noStroke();
+                triangle(
+                    this.x, this.y,
+                    this.x + this.width / 2, this.y - this.height,
+                    this.x + this.width, this.y
+                );
+            }
+        }
+
+        class Asteroid {
+            constructor() {
+                this.x = random(width);
+                this.y = -50;
+                this.size = random(20, 50);
+                this.speed = random(2, 5);
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+
+            show() {
+                fill(255);
+                noStroke();
+                ellipse(this.x, this.y, this.size, this.size);
+            }
+
+            offScreen() {
+                return this.y > height;
+            }
+
+            hits(spaceship) {
+                let d = dist(this.x, this.y, spaceship.x + spaceship.width / 2, spaceship.y);
+                return d < this.size / 2 + spaceship.width / 2;
+            }
+        }
+    </script>
+</body>
+</html>
